@@ -11,7 +11,7 @@
 
 该组件打通了 ClickHouse bitmap 与 Java bitmap 对象之间的跨系统兼容链路，为规则引擎中的大规模分类 bitmap 匹配提供了底层支持。
 
-核心实现文件：`src/main/java/com/glab/yd/tools/Bitmap64Serialize.java`
+核心实现文件：`Bitmap64Serialize.java`
 
 ---
 
@@ -70,29 +70,6 @@ flowchart TB
     L4 --> L5["deserializePortable(...)"]
     L5 --> Z
 ```
-
----
-
-## 在线读取链路
-在规则引擎运行过程中，ClickHouse bitmap 的实际读取链路如下：
-
-```mermaid
-flowchart LR
-    A["ClickHouse\n返回 bitmap 二进制"] --> B["queryBitmapBytesByClickHouse(...)"]
-    B --> C["Bitmap64Serialize.deserializeFromCKBytes(...)"]
-    C --> D["得到 Roaring64NavigableMap"]
-    D --> E["与当前结果 bitmap 做 OR 合并"]
-    E --> F["runOptimize()"]
-    F --> G["规则引擎使用分类 bitmap 做匹配"]
-```
-
-业务链路中的实际调用位置：
-
-- `src/main/java/com/glab/yd/alarm/provider/ExternalProviders.java`
-- 读取 ClickHouse bitmap 后调用 `Bitmap64Serialize.deserializeFromCKBytes(bytes)`
-- 将多个批次结果 `or` 合并后再 `runOptimize()`
-
----
 
 ## 编码流程说明
 
